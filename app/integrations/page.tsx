@@ -1,6 +1,13 @@
-import { auth, signIn } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import {
+  signInWithGoogle,
+  signInWithGitHub,
+  signOutUser,
+  disconnectGitHub,
+  disconnectGoogle,
+} from "@/actions/auth";
 
 export default async function IntegrationsPage() {
   const session = await auth();
@@ -54,6 +61,14 @@ export default async function IntegrationsPage() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">{session.user.email}</span>
+            <form action={signOutUser}>
+              <button
+                type="submit"
+                className="text-sm text-gray-600 hover:text-black"
+              >
+                Sign out
+              </button>
+            </form>
           </div>
         </div>
       </div>
@@ -79,15 +94,17 @@ export default async function IntegrationsPage() {
                 {hasGoogle ? (
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-gray-600">Connected</span>
-                    <div className="w-2 h-2 bg-black rounded-full"></div>
+                    <form action={disconnectGoogle}>
+                      <button
+                        type="submit"
+                        className="text-sm text-gray-600 hover:text-black"
+                      >
+                        Disconnect
+                      </button>
+                    </form>
                   </div>
                 ) : (
-                  <form
-                    action={async () => {
-                      "use server";
-                      await signIn("google");
-                    }}
-                  >
+                  <form action={signInWithGoogle}>
                     <button
                       type="submit"
                       className="border border-black px-4 py-2 text-sm hover:bg-black hover:text-white transition-colors"
@@ -113,15 +130,17 @@ export default async function IntegrationsPage() {
                 {hasGitHub ? (
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-gray-600">Connected</span>
-                    <div className="w-2 h-2 bg-black rounded-full"></div>
+                    <form action={disconnectGitHub}>
+                      <button
+                        type="submit"
+                        className="text-sm text-gray-600 hover:text-black"
+                      >
+                        Disconnect
+                      </button>
+                    </form>
                   </div>
                 ) : (
-                  <form
-                    action={async () => {
-                      "use server";
-                      await signIn("github");
-                    }}
-                  >
+                  <form action={signInWithGitHub}>
                     <button
                       type="submit"
                       className="border border-black px-4 py-2 text-sm hover:bg-black hover:text-white transition-colors"

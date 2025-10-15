@@ -7,21 +7,52 @@ export function AutoSyncGmail() {
   const [lastSync, setLastSync] = useState<Date | null>(null);
 
   useEffect(() => {
-    const syncGmail = async () => {
+    let timeoutId: number | undefined;
+
+    const jitterMs = (baseMs: number, varianceMs: number) => {
+      const delta = Math.floor(Math.random() * varianceMs * 2) - varianceMs; // [-variance, +variance]
+      return baseMs + delta;
+    };
+
+    const scheduleNext = () => {
+      // Base 90s with ±15s jitter
+      const delay = jitterMs(90_000, 15_000);
+      timeoutId = window.setTimeout(runSyncIfVisible, delay);
+    };
+
+    const runSyncIfVisible = async () => {
+      if (document.hidden) {
+        // If tab hidden, reschedule without syncing
+        scheduleNext();
+        return;
+      }
       setSyncing(true);
       try {
-        // Just trigger the messages list to refresh
-        // It will fetch fresh data from Gmail
         window.dispatchEvent(new CustomEvent("refreshMessages"));
         setLastSync(new Date());
       } catch (error) {
         console.error("Auto-sync error:", error);
       } finally {
         setSyncing(false);
+        scheduleNext();
       }
     };
 
-    syncGmail();
+    // Kick off immediately on mount
+    runSyncIfVisible();
+
+    const onVisibilityChange = () => {
+      if (!document.hidden && timeoutId === undefined) {
+        // If we were paused and come back, restart loop
+        scheduleNext();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
 
   if (!syncing && !lastSync) return null;

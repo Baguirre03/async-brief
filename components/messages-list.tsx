@@ -12,6 +12,7 @@ interface Message {
   recievedAt: string | null;
   url: string | null;
   tags: string[];
+  provider?: string;
 }
 
 export function MessagesList() {
@@ -22,14 +23,40 @@ export function MessagesList() {
   const fetchMessages = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/fetch/gmail");
-      const data = await response.json();
+      const [gmailRes, githubRes] = await Promise.allSettled([
+        fetch("/api/fetch/gmail"),
+        fetch("/api/fetch/github"),
+      ]);
 
-      if (data.success) {
-        setMessages(data.messages);
-      } else {
-        setError("Failed to load messages");
+      const all: Message[] = [];
+
+      if (gmailRes.status === "fulfilled") {
+        const data = await gmailRes.value.json();
+        if (data.success && Array.isArray(data.messages)) {
+          all.push(...data.messages);
+        }
       }
+
+      if (githubRes.status === "fulfilled") {
+        const data = await githubRes.value.json();
+        if (data.success && Array.isArray(data.messages)) {
+          all.push(...data.messages);
+        }
+      }
+
+      if (all.length === 0) {
+        setMessages([]);
+        return;
+      }
+
+      // Sort by recievedAt desc
+      all.sort((a, b) => {
+        const ta = a.recievedAt ? new Date(a.recievedAt).getTime() : 0;
+        const tb = b.recievedAt ? new Date(b.recievedAt).getTime() : 0;
+        return tb - ta;
+      });
+
+      setMessages(all);
     } catch (err) {
       setError("Failed to load messages");
       console.error(err);
@@ -82,7 +109,8 @@ export function MessagesList() {
             className="block px-4 py-3"
           >
             <div className="flex items-baseline gap-4">
-              <div className="w-48 flex-shrink-0 truncate text-sm">
+              <div className="w-48 flex-shrink-0 truncate text-sm flex items-center gap-2">
+                {renderProviderIcon(message.provider)}
                 {message.sender || "Unknown"}
               </div>
               <div className="flex-1 min-w-0">
@@ -109,6 +137,47 @@ export function MessagesList() {
         </div>
       ))}
     </div>
+  );
+}
+
+function renderProviderIcon(provider?: string) {
+  const common = "w-3 h-3 text-gray-600";
+  if (provider === "github") {
+    // Git branching icon (minimal mono)
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        className={common}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="6" cy="4" r="2" />
+        <circle cx="6" cy="20" r="2" />
+        <circle cx="18" cy="12" r="2" />
+        <path d="M8 5v14" />
+        <path d="M8 6c8 0 8 6 8 6" />
+      </svg>
+    );
+  }
+  // Default to mail icon (Gmail or unknown)
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={common}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="5" width="18" height="14" rx="1" />
+      <path d="M3 7l9 6 9-6" />
+    </svg>
   );
 }
 

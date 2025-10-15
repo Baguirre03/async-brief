@@ -1,4 +1,5 @@
-import { auth, signIn, signOut } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+import { signInWithGoogle, signOutUser } from "@/actions/auth";
 import { MessagesList } from "@/components/messages-list";
 import { AutoSyncGmail } from "@/components/auto-sync-gmail";
 
@@ -10,12 +11,7 @@ export default async function Home() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center max-w-md">
           <h1 className="text-2xl font-normal mb-8">Async Briefing</h1>
-          <form
-            action={async () => {
-              "use server";
-              await signIn("google");
-            }}
-          >
+          <form action={signInWithGoogle}>
             <button
               type="submit"
               className="border border-black px-6 py-2 text-sm hover:bg-black hover:text-white transition-colors"
@@ -42,12 +38,7 @@ export default async function Home() {
               Integrations
             </a>
             <span className="text-sm text-gray-600">{session.user.email}</span>
-            <form
-              action={async () => {
-                "use server";
-                await signOut();
-              }}
-            >
+            <form action={signOutUser}>
               <button
                 type="submit"
                 className="text-sm text-gray-600 hover:text-black"
