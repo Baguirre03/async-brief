@@ -46,9 +46,11 @@ export async function fetchGmailMessages(userId: string) {
 
   const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const query = `after:${Math.floor(yesterday.getTime() / 1000)}`;
+  const threeDaysAgo = new Date();
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+  const query = `after:${Math.floor(
+    threeDaysAgo.getTime() / 1000
+  )} -from:me is:unread`;
 
   const response = await gmail.users.messages.list({
     userId: "me",
@@ -94,6 +96,7 @@ export async function fetchGmailMessages(userId: string) {
     const preview = body.substring(0, 200);
 
     return {
+      id: msg.id!,
       externalId: msg.id!,
       provider: "gmail",
       title: subject,
@@ -102,25 +105,10 @@ export async function fetchGmailMessages(userId: string) {
       url: `https://mail.google.com/mail/u/0/#inbox/${msg.id}`,
       recievedAt: new Date(date || Date.now()),
       priority: "medium",
+      status: "unread",
+      tags: [],
     };
   });
-
-  for (const message of parsedMessages) {
-    await prisma.message.upsert({
-      where: {
-        provider_externalId_userId: {
-          provider: "gmail",
-          externalId: message.externalId,
-          userId,
-        },
-      },
-      update: {},
-      create: {
-        ...message,
-        userId,
-      },
-    });
-  }
 
   return parsedMessages;
 }

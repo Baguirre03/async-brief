@@ -22,7 +22,7 @@ export function MessagesList() {
   const fetchMessages = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/messages");
+      const response = await fetch("/api/fetch/gmail");
       const data = await response.json();
 
       if (data.success) {

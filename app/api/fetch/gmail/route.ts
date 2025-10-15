@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { fetchGmailMessages } from "@/lib/integrations/gmail";
 
-export async function POST() {
+export async function GET() {
   try {
     const session = await auth();
 
