@@ -27,20 +27,15 @@ export function AutoSyncGmail() {
   if (!syncing && !lastSync) return null;
 
   return (
-    <div className="mb-4">
+    <div className="border-b border-gray-200 px-4 py-2">
       {syncing ? (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2 flex items-center gap-2">
-          <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-          <span className="text-sm text-blue-800 dark:text-blue-200">
-            Syncing Gmail...
-          </span>
+        <div className="flex items-center gap-2">
+          <div className="animate-spin h-3 w-3 border border-black border-t-transparent rounded-full"></div>
+          <span className="text-xs text-gray-600">Syncing...</span>
         </div>
       ) : (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg px-4 py-2 flex items-center gap-2">
-          <span className="text-green-600 dark:text-green-400">✓</span>
-          <span className="text-sm text-green-800 dark:text-green-200">
-            Messages synced
-          </span>
+        <div className="text-xs text-gray-600">
+          Last synced: {lastSync?.toLocaleTimeString()}
         </div>
       )}
     </div>
