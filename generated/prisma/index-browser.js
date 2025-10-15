@@ -175,23 +175,6 @@ exports.Prisma.IntegrationScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.MessageScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  provider: 'provider',
-  externalId: 'externalId',
-  title: 'title',
-  content: 'content',
-  url: 'url',
-  sender: 'sender',
-  priority: 'priority',
-  status: 'status',
-  threadId: 'threadId',
-  tags: 'tags',
-  recievedAt: 'recievedAt',
-  createdAt: 'createdAt'
-};
-
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -224,8 +207,7 @@ exports.Prisma.ModelName = {
   Session: 'Session',
   VerificationToken: 'VerificationToken',
   User: 'User',
-  Integration: 'Integration',
-  Message: 'Message'
+  Integration: 'Integration'
 };
 
 /**

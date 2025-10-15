@@ -40,8 +40,6 @@ export function MessagesList() {
 
   useEffect(() => {
     fetchMessages();
-
-    // Listen for refresh events from FetchGmailButton
     const handleRefresh = () => {
       fetchMessages();
     };
