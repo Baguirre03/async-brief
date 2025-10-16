@@ -59,8 +59,6 @@ export async function fetchGitHubNotifications(userId: string) {
         Authorization: `Bearer ${account.access_token}`,
         "X-GitHub-Api-Version": "2022-11-28",
       },
-      // Avoid caching
-      cache: "no-store",
     }
   );
 
@@ -71,7 +69,6 @@ export async function fetchGitHubNotifications(userId: string) {
   }
 
   const notifications = (await response.json()) as GitHubNotification[];
-  console.log("GitHub notifications:", notifications);
 
   // Map to shared message shape
   const mapped = notifications.map((n) => {

@@ -1,91 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-interface Message {
-  id: string;
-  title: string | null;
-  content: string | null;
-  sender: string | null;
-  priority: string;
-  status: string;
-  recievedAt: string | null;
-  url: string | null;
-  tags: string[];
-  provider?: string;
-}
+import { useAllMessages } from "@/lib/hooks/use-messages";
 
 export function MessagesList() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { messages, isLoading, isError, error } = useAllMessages();
 
-  const fetchMessages = async () => {
-    try {
-      setLoading(true);
-      const [gmailRes, githubRes] = await Promise.allSettled([
-        fetch("/api/fetch/gmail"),
-        fetch("/api/fetch/github"),
-      ]);
-
-      const all: Message[] = [];
-
-      if (gmailRes.status === "fulfilled") {
-        const data = await gmailRes.value.json();
-        if (data.success && Array.isArray(data.messages)) {
-          all.push(...data.messages);
-        }
-      }
-
-      if (githubRes.status === "fulfilled") {
-        const data = await githubRes.value.json();
-        if (data.success && Array.isArray(data.messages)) {
-          all.push(...data.messages);
-        }
-      }
-
-      if (all.length === 0) {
-        setMessages([]);
-        return;
-      }
-
-      // Sort by recievedAt desc
-      all.sort((a, b) => {
-        const ta = a.recievedAt ? new Date(a.recievedAt).getTime() : 0;
-        const tb = b.recievedAt ? new Date(b.recievedAt).getTime() : 0;
-        return tb - ta;
-      });
-
-      setMessages(all);
-    } catch (err) {
-      setError("Failed to load messages");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMessages();
-    const handleRefresh = () => {
-      fetchMessages();
-    };
-
-    window.addEventListener("refreshMessages", handleRefresh);
-    return () => {
-      window.removeEventListener("refreshMessages", handleRefresh);
-    };
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="text-center py-12 text-sm text-gray-500">Loading...</div>
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
-      <div className="text-center py-12 text-sm text-gray-500">{error}</div>
+      <div className="text-center py-12 text-sm text-gray-500">
+        {error instanceof Error ? error.message : "Failed to load messages"}
+      </div>
     );
   }
 
