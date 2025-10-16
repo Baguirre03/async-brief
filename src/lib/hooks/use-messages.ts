@@ -20,81 +20,40 @@ interface ApiResponse {
   success: boolean;
   count: number;
   messages: Message[];
+  providers: {
+    github: boolean;
+    gmail: boolean;
+  };
 }
 
-async function fetchMessages(endpoint: string): Promise<Message[]> {
-  const response = await fetch(endpoint);
+async function fetchAllMessages(): Promise<ApiResponse> {
+  const response = await fetch("/api/fetch/all");
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Failed to fetch from ${endpoint}`);
+    throw new Error(errorData.error || "Failed to fetch messages");
   }
 
-  const data: ApiResponse = await response.json();
-
-  if (!data.success) {
-    throw new Error(`API returned unsuccessful response from ${endpoint}`);
-  }
-
-  return data.messages;
+  return response.json();
 }
 
-export function useGitHubMessages() {
+export function useAllMessagesOptimized() {
   return useQuery({
-    queryKey: ["messages", "github"],
-    queryFn: () => fetchMessages("/api/fetch/github"),
-    staleTime: 2 * 60 * 1000, // 2 minutes for GitHub notifications
-    gcTime: 10 * 60 * 1000, // 10 minutes cache time
+    queryKey: ["messages", "all"],
+    queryFn: fetchAllMessages,
+    staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh for 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes cache time - keeps data in cache longer
+    refetchOnWindowFocus: false, // Don't refetch when user returns to tab
+    refetchOnMount: true, // Refetch when component mounts
+    refetchOnReconnect: true, // Only refetch when network reconnects
+    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes in background
+    refetchIntervalInBackground: false, // Don't refetch when tab is hidden
+    retry: (failureCount, error) => {
+      if (error instanceof Error && error.message.includes("4")) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
-}
-
-export function useGmailMessages() {
-  return useQuery({
-    queryKey: ["messages", "gmail"],
-    queryFn: () => fetchMessages("/api/fetch/gmail"),
-    staleTime: 5 * 60 * 1000, // 5 minutes for Gmail messages
-    gcTime: 15 * 60 * 1000, // 15 minutes cache time
-  });
-}
-
-export function useAllMessages() {
-  const githubQuery = useGitHubMessages();
-  const gmailQuery = useGmailMessages();
-
-  const isLoading = githubQuery.isLoading || gmailQuery.isLoading;
-  const isError = githubQuery.isError || gmailQuery.isError;
-  const error = githubQuery.error || gmailQuery.error;
-
-  const messages: Message[] = [];
-
-  if (githubQuery.data) {
-    messages.push(...githubQuery.data);
-  }
-
-  if (gmailQuery.data) {
-    messages.push(...gmailQuery.data);
-  }
-
-  // Sort by recievedAt desc
-  const sortedMessages = messages.sort((a, b) => {
-    const ta = a.recievedAt ? new Date(a.recievedAt).getTime() : 0;
-    const tb = b.recievedAt ? new Date(b.recievedAt).getTime() : 0;
-    return tb - ta;
-  });
-
-  const refetch = () => {
-    githubQuery.refetch();
-    gmailQuery.refetch();
-  };
-
-  return {
-    messages: sortedMessages,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    // Individual query states for more granular control
-    github: githubQuery,
-    gmail: gmailQuery,
-  };
 }

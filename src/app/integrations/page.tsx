@@ -97,7 +97,7 @@ export default async function IntegrationsPage() {
                     <form action={disconnectGoogle}>
                       <button
                         type="submit"
-                        className="text-sm text-gray-600 hover:text-black"
+                        className="text-sm text-gray-600 hover:text-black cursor-pointer"
                       >
                         Disconnect
                       </button>
@@ -133,7 +133,7 @@ export default async function IntegrationsPage() {
                     <form action={disconnectGitHub}>
                       <button
                         type="submit"
-                        className="text-sm text-gray-600 hover:text-black"
+                        className="text-sm text-gray-600 hover:text-black cursor-pointer"
                       >
                         Disconnect
                       </button>

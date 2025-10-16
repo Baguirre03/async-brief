@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
 import {
   signInWithGoogle,
   signInWithGitHub,
@@ -13,6 +14,20 @@ export function useAuth() {
   const isLoading = status === "loading";
   const isAuthenticated = !!session?.user;
   const user = session?.user;
+
+  // Query to fetch user's connected accounts
+  const { data: accounts = [] } = useQuery({
+    queryKey: ["accounts", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const response = await fetch("/api/user/accounts");
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.accounts || [];
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   const signIn = {
     google: async () => {
@@ -54,11 +69,12 @@ export function useAuth() {
     signOut,
 
     // Utilities
-    hasProvider: (_provider: "google" | "github") => {
+    hasProvider: (provider: "google" | "github") => {
       if (!session?.user?.id) return false;
-      // This would need to be enhanced to check actual connected providers
-      // For now, we'll assume both are available if authenticated
-      return isAuthenticated;
+      return accounts.some(
+        (account: { provider: string }) => account.provider === provider
+      );
     },
+    accounts,
   };
 }

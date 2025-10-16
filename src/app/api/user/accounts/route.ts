@@ -1,26 +1,34 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { fetchGmailMessages } from "@/lib/integrations/gmail";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
     const session = await auth();
-
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const messages = await fetchGmailMessages(session.user.id);
+    const accounts = await prisma.account.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      select: {
+        id: true,
+        provider: true,
+        type: true,
+        providerAccountId: true,
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      count: messages.length,
-      messages,
+      accounts,
     });
   } catch (error) {
-    console.error("Gmail fetch error:", error);
+    console.error("Accounts fetch error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch Gmail messages" },
+      { error: "Failed to fetch accounts" },
       { status: 500 }
     );
   }

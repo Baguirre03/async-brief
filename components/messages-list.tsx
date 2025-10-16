@@ -1,28 +1,25 @@
 "use client";
 
-import { useAllMessagesOptimized } from "@/lib/hooks/use-messages";
+import { useEffect } from "react";
+import { useAllMessages } from "@/lib/hooks/use-messages";
 
 export function MessagesList() {
-  const { data, isLoading, isError, error } = useAllMessagesOptimized();
+  const { messages, isLoading, isError, error, refetch } = useAllMessages();
 
-  const messages = data?.messages || [];
+  useEffect(() => {
+    const handleRefresh = () => {
+      refetch();
+    };
+
+    window.addEventListener("refreshMessages", handleRefresh);
+    return () => {
+      window.removeEventListener("refreshMessages", handleRefresh);
+    };
+  }, [refetch]);
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="border-b border-gray-200 px-4 py-3">
-            <div className="flex items-baseline gap-4">
-              <div className="w-48 h-4 bg-gray-200 rounded animate-pulse"></div>
-              <div className="flex-1 min-w-0">
-                <div className="h-4 bg-gray-200 rounded animate-pulse mb-1"></div>
-                <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4"></div>
-              </div>
-              <div className="w-16 h-3 bg-gray-100 rounded animate-pulse"></div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <div className="text-center py-12 text-sm text-gray-500">Loading...</div>
     );
   }
 
