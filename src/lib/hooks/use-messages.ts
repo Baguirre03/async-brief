@@ -9,6 +9,7 @@ export interface Message {
   provider: string;
   title: string | null;
   content: string | null;
+  preview: string | null;
   sender: string | null;
   url: string | null;
   recievedAt: Date | string;
@@ -103,8 +104,15 @@ export function useAllMessagesOptimized() {
   });
 
   const markAsRead = useCallback(
-    (messageId: string, url: string, provider: string) => {
-      window.open(url, "_blank", "noopener,noreferrer");
+    (
+      messageId: string,
+      url: string,
+      provider: string,
+      openUrl: boolean = true
+    ) => {
+      if (openUrl) {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
       markAsReadMutation.mutate({ messageId, provider });
     },
     [markAsReadMutation]

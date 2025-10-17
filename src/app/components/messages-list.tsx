@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, RotateCcw, GitBranch, Mail } from "lucide-react";
 import { useAllMessagesOptimized } from "@/lib/hooks/use-messages";
+import { GmailPopup } from "@/app/components/gmail-popup";
 
 export function MessagesList() {
   const {
@@ -16,6 +17,16 @@ export function MessagesList() {
   } = useAllMessagesOptimized();
   const [isUnreadCollapsed, setIsUnreadCollapsed] = useState(false);
   const [isReadCollapsed, setIsReadCollapsed] = useState(false);
+  const [popupMessage, setPopupMessage] = useState<{
+    id: string;
+    url: string;
+    messageData: {
+      title?: string | null;
+      content?: string | null;
+      sender?: string | null;
+      recievedAt?: Date | string;
+    };
+  } | null>(null);
 
   if (isLoading) {
     return (
@@ -92,9 +103,32 @@ export function MessagesList() {
               <div
                 key={message.id}
                 className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer bg-blue-25"
-                onClick={() =>
-                  markAsRead(message.id, message.url || "#", message.provider)
-                }
+                onClick={() => {
+                  if (message.provider === "gmail") {
+                    markAsRead(
+                      message.id,
+                      message.url || "#",
+                      message.provider,
+                      false
+                    );
+                    setPopupMessage({
+                      id: message.id,
+                      url: message.url || "#",
+                      messageData: {
+                        title: message.title,
+                        content: message.content,
+                        sender: message.sender,
+                        recievedAt: message.recievedAt,
+                      },
+                    });
+                  } else {
+                    markAsRead(
+                      message.id,
+                      message.url || "#",
+                      message.provider
+                    );
+                  }
+                }}
               >
                 <div className="block px-4 py-3">
                   <div className="flex items-baseline gap-4">
@@ -106,9 +140,9 @@ export function MessagesList() {
                       <span className="text-sm font-semibold">
                         {message.title || "(no subject)"}
                       </span>
-                      {message.content && (
+                      {message.preview && (
                         <span className="text-sm text-gray-600 ml-2">
-                          - {message.content.substring(0, 100)}
+                          - {message.preview}
                         </span>
                       )}
                     </div>
@@ -148,13 +182,28 @@ export function MessagesList() {
               <div
                 key={message.id}
                 className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => {
+                  if (message.provider === "gmail") {
+                    setPopupMessage({
+                      id: message.id,
+                      url: message.url || "#",
+                      messageData: {
+                        title: message.title,
+                        content: message.content,
+                        sender: message.sender,
+                        recievedAt: message.recievedAt,
+                      },
+                    });
+                  } else {
+                    window.open(
+                      message.url || "#",
+                      "_blank",
+                      "noopener,noreferrer"
+                    );
+                  }
+                }}
               >
-                <a
-                  href={message.url || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block px-4 py-3"
-                >
+                <div className="block px-4 py-3">
                   <div className="flex items-baseline gap-4">
                     <div className="w-48 flex-shrink-0 truncate text-sm flex items-center gap-2 text-gray-600">
                       {renderProviderIcon(message.provider)}
@@ -164,9 +213,9 @@ export function MessagesList() {
                       <span className="text-sm font-normal text-gray-700">
                         {message.title || "(no subject)"}
                       </span>
-                      {message.content && (
+                      {message.preview && (
                         <span className="text-sm text-gray-500 ml-2">
-                          - {message.content.substring(0, 100)}
+                          - {message.preview}
                         </span>
                       )}
                     </div>
@@ -175,11 +224,21 @@ export function MessagesList() {
                         formatDate(new Date(message.recievedAt))}
                     </div>
                   </div>
-                </a>
+                </div>
               </div>
             ))}
         </div>
       )}
+
+      {/* Gmail Popup */}
+      <GmailPopup
+        isOpen={popupMessage !== null}
+        onClose={() => {
+          setPopupMessage(null);
+        }}
+        messageUrl={popupMessage?.url || ""}
+        messageData={popupMessage?.messageData}
+      />
     </div>
   );
 }

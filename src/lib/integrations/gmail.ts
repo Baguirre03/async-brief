@@ -7,6 +7,7 @@ interface GmailMessage {
   provider: string;
   title: string | null;
   content: string | null;
+  preview: string | null;
   sender: string | null;
   url: string | null;
   recievedAt: Date;
@@ -115,7 +116,8 @@ export async function fetchGmailMessages(userId: string) {
       externalId: msg.id!,
       provider: "gmail",
       title: subject,
-      content: preview,
+      content: body,
+      preview: preview,
       sender: from,
       url: `https://mail.google.com/mail/u/0/#inbox/${msg.id}`,
       recievedAt: new Date(date || Date.now()),
@@ -186,5 +188,60 @@ export async function markGmailMessageAsRead(
   } catch (error) {
     console.error("Error marking Gmail message as read:", error);
     throw new Error("Failed to mark message as read");
+  }
+}
+
+/**
+ * Delete a Gmail message
+ * @param userId - The ID of the user
+ * @param messageId - The ID of the message to delete
+ */
+export async function deleteGmailMessage(userId: string, messageId: string) {
+  const account = await prisma.account.findFirst({
+    where: {
+      userId,
+      provider: "google",
+    },
+  });
+
+  if (!account || !account.access_token) {
+    throw new Error("No Google account connected");
+  }
+
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+
+  oauth2Client.setCredentials({
+    access_token: account.access_token,
+    refresh_token: account.refresh_token,
+  });
+
+  oauth2Client.on("tokens", async (tokens) => {
+    if (tokens.refresh_token) {
+      await prisma.account.update({
+        where: { id: account.id },
+        data: {
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          expires_at: tokens.expiry_date
+            ? Math.floor(tokens.expiry_date / 1000)
+            : null,
+        },
+      });
+    }
+  });
+
+  const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+  try {
+    await gmail.users.messages.delete({
+      userId: "me",
+      id: messageId,
+    });
+  } catch (error) {
+    console.error("Error deleting Gmail message:", error);
+    throw new Error("Failed to delete message");
   }
 }
