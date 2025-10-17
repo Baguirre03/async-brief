@@ -86,7 +86,9 @@ export function MessagesList() {
 }
 
 function renderProviderIcon(provider?: string) {
+  console.log("provider", provider);
   const common = "w-3 h-3 text-gray-600";
+  // TODO: ADD ICON FOR GMAIL
   if (provider === "github") {
     // Git branching icon (minimal mono)
     return (

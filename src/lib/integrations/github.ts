@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Message } from "@/lib/hooks/use-messages";
 
 interface GitHubNotification {
   id: string;
@@ -15,6 +16,20 @@ interface GitHubNotification {
     latest_comment_url?: string;
     type: string;
   };
+}
+
+interface GitHubMessage {
+  id: string;
+  externalId: string;
+  provider: "github";
+  title: string | null;
+  content: string | null;
+  sender: string | null;
+  url: string | null;
+  recievedAt: Date;
+  priority: string;
+  status: string;
+  tags: string[];
 }
 
 export async function fetchGitHubNotifications(userId: string) {
@@ -88,7 +103,7 @@ export async function fetchGitHubNotifications(userId: string) {
       priority: "medium",
       status: n.unread ? "unread" : "read",
       tags: [n.subject.type.toLowerCase()],
-    };
+    } satisfies GitHubMessage;
   });
 
   return mapped;

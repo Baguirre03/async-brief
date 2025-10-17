@@ -1,6 +1,20 @@
 import { google } from "googleapis";
 import { prisma } from "@/lib/prisma";
 
+interface GmailMessage {
+  id: string;
+  externalId: string;
+  provider: string;
+  title: string | null;
+  content: string | null;
+  sender: string | null;
+  url: string | null;
+  recievedAt: Date;
+  priority: string;
+  status: string;
+  tags: string[];
+}
+
 /**
  * Fetch Gmail messages for a user
  * @param userId - The ID of the user
@@ -107,7 +121,7 @@ export async function fetchGmailMessages(userId: string) {
       priority: "medium",
       status: "unread",
       tags: [],
-    };
+    } satisfies GmailMessage;
   });
 
   return parsedMessages;

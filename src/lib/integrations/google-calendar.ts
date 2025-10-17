@@ -22,6 +22,26 @@ export interface CalendarEvent {
   calendarColor?: string;
 }
 
+interface GoogleCalendarMessage {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  description?: string;
+  location?: string;
+  attendees?: Array<{
+    email: string;
+    displayName?: string;
+    responseStatus: string;
+  }>;
+  isAllDay: boolean;
+  status: string;
+  htmlLink?: string;
+  calendarId?: string;
+  calendarName?: string;
+  calendarColor?: string;
+}
+
 /**
  * Fetch Google Calendar events for a user for today from ALL calendars
  * @param userId - The ID of the user
@@ -153,7 +173,7 @@ export async function fetchGoogleCalendarEvents(
         calendarId: event.calendarId,
         calendarName: event.calendarName,
         calendarColor: event.calendarColor,
-      };
+      } satisfies GoogleCalendarMessage;
     });
 
     return parsedEvents;
