@@ -5,16 +5,17 @@ import { ChevronDown, RotateCcw, GitBranch, Mail } from "lucide-react";
 import { useAllMessagesOptimized } from "@/lib/hooks/use-messages";
 
 export function MessagesList() {
-  const { data, isLoading, isError, error, refetch } =
-    useAllMessagesOptimized();
+  const {
+    isLoading,
+    isError,
+    error,
+    refetch,
+    markAsRead,
+    unreadMessages,
+    readMessages,
+  } = useAllMessagesOptimized();
   const [isUnreadCollapsed, setIsUnreadCollapsed] = useState(false);
   const [isReadCollapsed, setIsReadCollapsed] = useState(false);
-
-  const messages = data?.messages || [];
-
-  // Separate messages into read and unread
-  const unreadMessages = messages.filter((msg) => msg.status === "unread");
-  const readMessages = messages.filter((msg) => msg.status === "read");
 
   if (isLoading) {
     return (
@@ -43,7 +44,7 @@ export function MessagesList() {
     );
   }
 
-  if (messages.length === 0) {
+  if (unreadMessages.length === 0 && readMessages.length === 0) {
     return (
       <div className="text-center py-12 text-sm text-gray-500">No messages</div>
     );
@@ -91,13 +92,11 @@ export function MessagesList() {
               <div
                 key={message.id}
                 className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer bg-blue-25"
+                onClick={() =>
+                  markAsRead(message.id, message.url || "#", message.provider)
+                }
               >
-                <a
-                  href={message.url || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block px-4 py-3"
-                >
+                <div className="block px-4 py-3">
                   <div className="flex items-baseline gap-4">
                     <div className="w-48 flex-shrink-0 truncate text-sm flex items-center gap-2">
                       {renderProviderIcon(message.provider)}
@@ -118,7 +117,7 @@ export function MessagesList() {
                         formatDate(new Date(message.recievedAt))}
                     </div>
                   </div>
-                </a>
+                </div>
               </div>
             ))}
         </div>
@@ -186,12 +185,10 @@ export function MessagesList() {
 }
 
 function renderProviderIcon(provider?: string) {
-  console.log("provider", provider);
   const common = "w-3 h-3 text-gray-600";
   if (provider === "github") {
     return <GitBranch className={common} />;
   }
-  // Default to mail icon (Gmail or unknown)
   return <Mail className={common} />;
 }
 

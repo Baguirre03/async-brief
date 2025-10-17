@@ -127,3 +127,64 @@ export async function fetchGmailMessages(userId: string) {
 
   return parsedMessages;
 }
+
+/**
+ * Mark a Gmail message as read by removing the UNREAD label
+ * @param userId - The ID of the user
+ * @param messageId - The ID of the message to mark as read
+ */
+export async function markGmailMessageAsRead(
+  userId: string,
+  messageId: string
+) {
+  const account = await prisma.account.findFirst({
+    where: {
+      userId,
+      provider: "google",
+    },
+  });
+
+  if (!account || !account.access_token) {
+    throw new Error("No Google account connected");
+  }
+
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+
+  oauth2Client.setCredentials({
+    access_token: account.access_token,
+    refresh_token: account.refresh_token,
+  });
+
+  oauth2Client.on("tokens", async (tokens) => {
+    if (tokens.refresh_token) {
+      await prisma.account.update({
+        where: { id: account.id },
+        data: {
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          expires_at: tokens.expiry_date
+            ? Math.floor(tokens.expiry_date / 1000)
+            : null,
+        },
+      });
+    }
+  });
+
+  const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+  try {
+    await gmail.users.messages.modify({
+      userId: "me",
+      id: messageId,
+      requestBody: {
+        removeLabelIds: ["UNREAD"],
+      },
+    });
+  } catch (error) {
+    console.error("Error marking Gmail message as read:", error);
+    throw new Error("Failed to mark message as read");
+  }
+}
