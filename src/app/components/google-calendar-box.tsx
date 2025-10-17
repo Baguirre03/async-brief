@@ -105,7 +105,7 @@ export function GoogleCalendarBox() {
   }
 
   return (
-    <div className="border border-gray-200 p-4 rounded-lg">
+    <div className="border border-gray-200 px-4 pt-4 pb-3 rounded-lg">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-blue-500 rounded"></div>
@@ -116,7 +116,7 @@ export function GoogleCalendarBox() {
         </div>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="text-gray-500 hover:text-gray-700 transition-colors"
+          className="text-gray-500 hover:cursor-pointer hover:text-gray-700 transition-colors"
         >
           <ChevronDown
             className={`w-4 h-4 transition-transform ${

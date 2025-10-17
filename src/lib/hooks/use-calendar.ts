@@ -15,7 +15,6 @@ interface CalendarData {
 
 async function fetchCalendarData(): Promise<CalendarData> {
   const response = await fetch("/api/calendar/today");
-  console.log(response, "RESPONSE");
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
