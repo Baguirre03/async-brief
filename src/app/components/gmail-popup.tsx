@@ -8,7 +8,8 @@ import {
   Trash2,
   Mail,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useDeleteMessage } from "@/lib/hooks/use-messages";
 
 interface GmailPopupProps {
   isOpen: boolean;
@@ -29,6 +30,32 @@ export function GmailPopup({
   messageData,
 }: GmailPopupProps) {
   const [isMinimized, setIsMinimized] = useState(false);
+  const deleteMutation = useDeleteMessage();
+
+  const extractGmailIdFromUrl = useCallback((url: string): string | null => {
+    try {
+      const hash = new URL(url).hash; // e.g. #inbox/<id>
+      if (!hash) return null;
+      const parts = hash.split("/");
+      const maybeId = parts[parts.length - 1];
+      return maybeId && maybeId !== "#" ? maybeId : null;
+    } catch {
+      const idx = url.lastIndexOf("/");
+      return idx !== -1 ? url.substring(idx + 1) || null : null;
+    }
+  }, []);
+
+  const handleDelete = useCallback(() => {
+    const id = extractGmailIdFromUrl(messageUrl);
+    if (!id) {
+      alert("Unable to determine Gmail message id from the URL.");
+      return;
+    }
+    deleteMutation.mutate(
+      { messageId: id, provider: "gmail" },
+      { onSuccess: () => onClose() }
+    );
+  }, [deleteMutation, extractGmailIdFromUrl, messageUrl, onClose]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -50,7 +77,6 @@ export function GmailPopup({
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      {/* Gmail-style Compose Window */}
       <div
         className={`bg-white border border-gray-300 shadow-2xl transition-all duration-300 rounded-lg ${
           isMinimized ? "w-80 h-12" : "w-[600px] h-[600px]"
@@ -72,17 +98,19 @@ export function GmailPopup({
               className="text-gray-600 hover:text-gray-800 transition-colors p-1"
               title="Open in Gmail"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4 hover:cursor-pointer" />
             </button>
             <button
-              onClick={() => {
-                // TODO: Implement delete functionality
-                console.log("Delete message");
-              }}
+              onClick={handleDelete}
               className="text-gray-600 hover:text-red-600 transition-colors p-1"
               title="Delete message"
+              disabled={deleteMutation.isPending}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2
+                className={`w-4 h-4 hover:cursor-pointer ${
+                  deleteMutation.isPending ? "opacity-50" : ""
+                }`}
+              />
             </button>
             <button
               onClick={() => setIsMinimized(!isMinimized)}
@@ -90,9 +118,9 @@ export function GmailPopup({
               title={isMinimized ? "Maximize" : "Minimize"}
             >
               {isMinimized ? (
-                <Maximize2 className="w-4 h-4" />
+                <Maximize2 className="w-4 h-4 hover:cursor-pointer" />
               ) : (
-                <Minimize2 className="w-4 h-4" />
+                <Minimize2 className="w-4 h-4 hover:cursor-pointer" />
               )}
             </button>
             <button
@@ -100,7 +128,7 @@ export function GmailPopup({
               className="text-gray-600 hover:text-gray-800 transition-colors p-1"
               title="Close"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4 hover:cursor-pointer" />
             </button>
           </div>
         </div>

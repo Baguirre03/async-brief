@@ -25,7 +25,6 @@ async function fetchCalendarData(): Promise<CalendarData> {
   }
 
   const data = await response.json();
-  console.log(data, "DATA");
 
   if (!data.success) {
     throw new Error(data.error || "Failed to fetch calendar data");

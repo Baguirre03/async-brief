@@ -236,12 +236,12 @@ export async function deleteGmailMessage(userId: string, messageId: string) {
   const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
   try {
-    await gmail.users.messages.delete({
+    await gmail.users.messages.trash({
       userId: "me",
       id: messageId,
     });
   } catch (error) {
-    console.error("Error deleting Gmail message:", error);
-    throw new Error("Failed to delete message");
+    console.error("Error moving Gmail message to trash:", error);
+    throw new Error("Failed to move message to trash");
   }
 }

@@ -56,6 +56,45 @@ async function markMessageAsRead(
   }
 }
 
+async function deleteMessageApi(
+  messageId: string,
+  provider: string
+): Promise<void> {
+  const response = await fetch("/api/messages/delete", {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ messageId, provider }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      (errorData as { error?: string }).error || "Failed to delete message"
+    );
+  }
+}
+
+export function useDeleteMessage() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({
+      messageId,
+      provider,
+    }: {
+      messageId: string;
+      provider: string;
+    }) => deleteMessageApi(messageId, provider),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["messages", "all"] });
+    },
+  });
+
+  return mutation;
+}
+
 export function useAllMessagesOptimized() {
   const queryClient = useQueryClient();
   const [readMessageIds, setReadMessageIds] = useState<Set<string>>(new Set());
