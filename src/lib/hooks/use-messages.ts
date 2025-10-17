@@ -43,10 +43,10 @@ export function useAllMessagesOptimized() {
     queryFn: fetchAllMessages,
     staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh for 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes cache time - keeps data in cache longer
-    refetchOnWindowFocus: false, // Don't refetch when user returns to tab
+    refetchOnWindowFocus: true,
     refetchOnMount: true, // Refetch when component mounts
     refetchOnReconnect: true, // Only refetch when network reconnects
-    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes in background
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds for better real-time sync
     refetchIntervalInBackground: false, // Don't refetch when tab is hidden
     retry: (failureCount, error) => {
       if (error instanceof Error && error.message.includes("4")) {
