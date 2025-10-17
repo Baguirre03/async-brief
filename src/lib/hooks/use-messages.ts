@@ -2,6 +2,7 @@
 
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 
 export interface Message {
   id: string;
@@ -89,6 +90,7 @@ export function useDeleteMessage() {
     }) => deleteMessageApi(messageId, provider),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["messages", "all"] });
+      toast.success("Moved message to trash");
     },
   });
 
