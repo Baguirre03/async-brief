@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { Message } from "@/lib/hooks/use-messages";
 
 interface GitHubNotification {
   id: string;

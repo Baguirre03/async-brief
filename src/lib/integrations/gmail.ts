@@ -62,9 +62,7 @@ export async function fetchGmailMessages(userId: string) {
 
   const threeDaysAgo = new Date();
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-  const query = `after:${Math.floor(
-    threeDaysAgo.getTime() / 1000
-  )} -from:me is:unread`;
+  const query = `after:${Math.floor(threeDaysAgo.getTime() / 1000)} -from:me`;
 
   const response = await gmail.users.messages.list({
     userId: "me",
@@ -109,6 +107,9 @@ export async function fetchGmailMessages(userId: string) {
 
     const preview = body.substring(0, 200);
 
+    // Check if message is read by looking at the labelIds
+    const isUnread = msg.labelIds?.includes("UNREAD") ?? true;
+
     return {
       id: msg.id!,
       externalId: msg.id!,
@@ -119,7 +120,7 @@ export async function fetchGmailMessages(userId: string) {
       url: `https://mail.google.com/mail/u/0/#inbox/${msg.id}`,
       recievedAt: new Date(date || Date.now()),
       priority: "medium",
-      status: "unread",
+      status: isUnread ? "unread" : "read",
       tags: [],
     } satisfies GmailMessage;
   });

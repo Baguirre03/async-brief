@@ -1,12 +1,20 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown, RotateCcw, GitBranch, Mail } from "lucide-react";
 import { useAllMessagesOptimized } from "@/lib/hooks/use-messages";
 
 export function MessagesList() {
   const { data, isLoading, isError, error, refetch } =
     useAllMessagesOptimized();
+  const [isUnreadCollapsed, setIsUnreadCollapsed] = useState(false);
+  const [isReadCollapsed, setIsReadCollapsed] = useState(false);
 
   const messages = data?.messages || [];
+
+  // Separate messages into read and unread
+  const unreadMessages = messages.filter((msg) => msg.status === "unread");
+  const readMessages = messages.filter((msg) => msg.status === "read");
 
   if (isLoading) {
     return (
@@ -46,69 +54,133 @@ export function MessagesList() {
       {/* Header with refresh button */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
         <h2 className="text-sm font-medium text-gray-700">
-          Messages ({messages.length})
+          Messages ({unreadMessages.length} unread, {readMessages.length} read)
         </h2>
         <button
           onClick={() => refetch()}
           disabled={isLoading}
           className="text-xs text-gray-500 hover:text-gray-700 disabled:opacity-50 flex items-center gap-1"
         >
-          <svg
-            className={`w-3 h-3 ${isLoading ? "animate-spin" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
+          <RotateCcw className={`w-3 h-3 ${isLoading ? "animate-spin" : ""}`} />
           Refresh
         </button>
       </div>
 
-      {messages.map((message) => (
-        <div
-          key={message.id}
-          className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
-        >
-          <a
-            href={message.url || "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block px-4 py-3"
-          >
-            <div className="flex items-baseline gap-4">
-              <div className="w-48 flex-shrink-0 truncate text-sm flex items-center gap-2">
-                {renderProviderIcon(message.provider)}
-                {message.sender || "Unknown"}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span
-                  className={`text-sm ${
-                    message.status === "unread"
-                      ? "font-semibold"
-                      : "font-normal"
+      {/* Unread Messages Section */}
+      {unreadMessages.length > 0 && (
+        <div>
+          <div className="px-4 py-2 bg-blue-50 border-b border-blue-200">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                Unread ({unreadMessages.length})
+              </h3>
+              <button
+                onClick={() => setIsUnreadCollapsed(!isUnreadCollapsed)}
+                className="text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                <ChevronDown
+                  className={`w-3 h-3 transition-transform ${
+                    isUnreadCollapsed ? "rotate-180" : ""
                   }`}
-                >
-                  {message.title || "(no subject)"}
-                </span>
-                {message.content && (
-                  <span className="text-sm text-gray-600 ml-2">
-                    - {message.content.substring(0, 100)}
-                  </span>
-                )}
-              </div>
-              <div className="flex-shrink-0 text-xs text-gray-500">
-                {message.recievedAt && formatDate(new Date(message.recievedAt))}
-              </div>
+                />
+              </button>
             </div>
-          </a>
+          </div>
+          {!isUnreadCollapsed &&
+            unreadMessages.map((message) => (
+              <div
+                key={message.id}
+                className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer bg-blue-25"
+              >
+                <a
+                  href={message.url || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-4 py-3"
+                >
+                  <div className="flex items-baseline gap-4">
+                    <div className="w-48 flex-shrink-0 truncate text-sm flex items-center gap-2">
+                      {renderProviderIcon(message.provider)}
+                      {message.sender || "Unknown"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-semibold">
+                        {message.title || "(no subject)"}
+                      </span>
+                      {message.content && (
+                        <span className="text-sm text-gray-600 ml-2">
+                          - {message.content.substring(0, 100)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-shrink-0 text-xs text-gray-500">
+                      {message.recievedAt &&
+                        formatDate(new Date(message.recievedAt))}
+                    </div>
+                  </div>
+                </a>
+              </div>
+            ))}
         </div>
-      ))}
+      )}
+
+      {/* Read Messages Section */}
+      {readMessages.length > 0 && (
+        <div>
+          <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                Read ({readMessages.length})
+              </h3>
+              <button
+                onClick={() => setIsReadCollapsed(!isReadCollapsed)}
+                className="text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <ChevronDown
+                  className={`w-3 h-3 transition-transform ${
+                    isReadCollapsed ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+          {!isReadCollapsed &&
+            readMessages.map((message) => (
+              <div
+                key={message.id}
+                className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                <a
+                  href={message.url || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-4 py-3"
+                >
+                  <div className="flex items-baseline gap-4">
+                    <div className="w-48 flex-shrink-0 truncate text-sm flex items-center gap-2 text-gray-600">
+                      {renderProviderIcon(message.provider)}
+                      {message.sender || "Unknown"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-normal text-gray-700">
+                        {message.title || "(no subject)"}
+                      </span>
+                      {message.content && (
+                        <span className="text-sm text-gray-500 ml-2">
+                          - {message.content.substring(0, 100)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-shrink-0 text-xs text-gray-400">
+                      {message.recievedAt &&
+                        formatDate(new Date(message.recievedAt))}
+                    </div>
+                  </div>
+                </a>
+              </div>
+            ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -116,44 +188,11 @@ export function MessagesList() {
 function renderProviderIcon(provider?: string) {
   console.log("provider", provider);
   const common = "w-3 h-3 text-gray-600";
-  // TODO: ADD ICON FOR GMAIL
   if (provider === "github") {
-    // Git branching icon (minimal mono)
-    return (
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        className={common}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="6" cy="4" r="2" />
-        <circle cx="6" cy="20" r="2" />
-        <circle cx="18" cy="12" r="2" />
-        <path d="M8 5v14" />
-        <path d="M8 6c8 0 8 6 8 6" />
-      </svg>
-    );
+    return <GitBranch className={common} />;
   }
   // Default to mail icon (Gmail or unknown)
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className={common}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="5" width="18" height="14" rx="1" />
-      <path d="M3 7l9 6 9-6" />
-    </svg>
-  );
+  return <Mail className={common} />;
 }
 
 function formatDate(date: Date): string {

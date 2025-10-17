@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { useCalendar } from "@/lib/hooks/use-calendar";
 import { CalendarEvent } from "@/lib/integrations/google-calendar";
 
@@ -47,21 +48,11 @@ export function GoogleCalendarBox() {
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="text-gray-500 hover:text-gray-700 transition-colors"
           >
-            <svg
+            <ChevronDown
               className={`w-4 h-4 transition-transform ${
                 isCollapsed ? "rotate-180" : ""
               }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
+            />
           </button>
         </div>
         <div
@@ -89,22 +80,11 @@ export function GoogleCalendarBox() {
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="text-gray-500 hover:text-gray-700 transition-colors"
           >
-            {/* TODO: ADD ICON INSTEAD OF SAVAGE */}
-            <svg
-              className={`w-4 h-4 transition-transform hover:cursor-pointer ${
+            <ChevronDown
+              className={`w-4 h-4 transition-transform ${
                 isCollapsed ? "rotate-180" : ""
               }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
+            />
           </button>
         </div>
         <div
@@ -138,21 +118,11 @@ export function GoogleCalendarBox() {
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="text-gray-500 hover:text-gray-700 transition-colors"
         >
-          <svg
+          <ChevronDown
             className={`w-4 h-4 transition-transform ${
               isCollapsed ? "rotate-180" : ""
             }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+          />
         </button>
       </div>
 
