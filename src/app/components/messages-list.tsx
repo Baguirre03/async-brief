@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown, RotateCcw, GitBranch, Mail } from "lucide-react";
-import { useAllMessagesOptimized } from "@/lib/hooks/use-messages";
+import { useAllMessages } from "@/lib/hooks/use-messages";
 import { GmailPopup } from "@/app/components/gmail-popup";
 
 export function MessagesList() {
@@ -14,7 +14,7 @@ export function MessagesList() {
     markAsRead,
     unreadMessages,
     readMessages,
-  } = useAllMessagesOptimized();
+  } = useAllMessages();
   const [isUnreadCollapsed, setIsUnreadCollapsed] = useState(false);
   const [isReadCollapsed, setIsReadCollapsed] = useState(false);
   const [popupMessage, setPopupMessage] = useState<{

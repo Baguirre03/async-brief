@@ -97,7 +97,7 @@ export function useDeleteMessage() {
   return mutation;
 }
 
-export function useAllMessagesOptimized() {
+export function useAllMessages() {
   const queryClient = useQueryClient();
   const [readMessageIds, setReadMessageIds] = useState<Set<string>>(new Set());
 
@@ -159,33 +159,26 @@ export function useAllMessagesOptimized() {
     [markAsReadMutation]
   );
 
-  // Transform messages to include locally marked as read
   const messages =
     query.data?.messages?.map((message) => ({
       ...message,
       status: readMessageIds.has(message.id) ? "read" : message.status,
     })) || [];
 
-  // Separate messages into read and unread
   const unreadMessages = messages.filter((msg) => msg.status === "unread");
   const readMessages = messages.filter((msg) => msg.status === "read");
 
   return {
-    // Original query properties
     ...query,
-    // Transformed data
     data: query.data
       ? {
           ...query.data,
           messages,
         }
       : undefined,
-    // State management functions
     markAsRead,
-    // Mutation state
     isMarkingAsRead: markAsReadMutation.isPending,
     markAsReadError: markAsReadMutation.error,
-    // Computed values
     unreadMessages,
     readMessages,
   };
