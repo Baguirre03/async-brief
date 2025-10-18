@@ -18,13 +18,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Handle different providers
     if (provider === "gmail") {
       await markGmailMessageAsRead(session.user.id, messageId);
-    } else if (provider === "github") {
-      // GitHub doesn't have a direct "mark as read" API for notifications
-      // The read status is typically managed by the user viewing the notification
-      console.log(`GitHub notification ${messageId} - no API to mark as read`);
     }
 
     return NextResponse.json({ success: true });

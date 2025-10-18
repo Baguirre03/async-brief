@@ -21,9 +21,6 @@ export async function DELETE(request: NextRequest) {
     // Handle different providers
     if (provider === "gmail") {
       await deleteGmailMessage(session.user.id, messageId);
-    } else if (provider === "github") {
-      // GitHub doesn't have a delete API for notifications
-      console.log(`GitHub notification ${messageId} - no delete API available`);
     }
 
     return NextResponse.json({ success: true });

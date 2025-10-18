@@ -15,7 +15,6 @@ export function useAuth() {
   const isAuthenticated = !!session?.user;
   const user = session?.user;
 
-  // Query to fetch user's connected accounts
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts", user?.id],
     queryFn: async () => {
@@ -26,7 +25,7 @@ export function useAuth() {
       return data.accounts || [];
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   const signIn = {
