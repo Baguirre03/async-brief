@@ -1,28 +1,5 @@
-import { google } from "googleapis";
-import { prisma } from "@/lib/prisma";
-
+import { createCalendarClient } from "../clients/google-calendar-client";
 export interface CalendarEvent {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  description?: string;
-  location?: string;
-  attendees?: Array<{
-    email: string;
-    displayName?: string;
-    responseStatus: string;
-  }>;
-  isAllDay: boolean;
-  status: string;
-  htmlLink?: string;
-  // Calendar info
-  calendarId?: string;
-  calendarName?: string;
-  calendarColor?: string;
-}
-
-interface GoogleCalendarMessage {
   id: string;
   title: string;
   start: Date;
@@ -52,45 +29,8 @@ export async function fetchGoogleCalendarEvents(
   userId: string,
   date: Date = new Date()
 ): Promise<CalendarEvent[]> {
-  const account = await prisma.account.findFirst({
-    where: {
-      userId,
-      provider: "google",
-    },
-  });
+  const calendar = await createCalendarClient(userId);
 
-  if (!account || !account.access_token) {
-    throw new Error("No Google account connected");
-  }
-
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET
-  );
-
-  oauth2Client.setCredentials({
-    access_token: account.access_token,
-    refresh_token: account.refresh_token,
-  });
-
-  oauth2Client.on("tokens", async (tokens) => {
-    if (tokens.refresh_token) {
-      await prisma.account.update({
-        where: { id: account.id },
-        data: {
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          expires_at: tokens.expiry_date
-            ? Math.floor(tokens.expiry_date / 1000)
-            : null,
-        },
-      });
-    }
-  });
-
-  const calendar = google.calendar({ version: "v3", auth: oauth2Client });
-
-  // Get start and end of the day
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
 
@@ -98,11 +38,9 @@ export async function fetchGoogleCalendarEvents(
   endOfDay.setHours(23, 59, 59, 999);
 
   try {
-    // First, get list of all calendars
     const calendarsResponse = await calendar.calendarList.list();
     const calendars = calendarsResponse.data.items || [];
 
-    // Fetch events from ALL calendars
     const allEventsPromises = calendars.map(async (cal) => {
       try {
         const response = await calendar.events.list({
@@ -115,7 +53,6 @@ export async function fetchGoogleCalendarEvents(
 
         const events = response.data.items || [];
 
-        // Return events with calendar info
         return events.map((event) => ({
           ...event,
           calendarId: cal.id || undefined,
@@ -131,7 +68,6 @@ export async function fetchGoogleCalendarEvents(
     const allEventsArrays = await Promise.all(allEventsPromises);
     const allEvents = allEventsArrays.flat();
 
-    // Sort all events by start time
     allEvents.sort((a, b) => {
       const timeA = a.start?.dateTime || a.start?.date || "";
       const timeB = b.start?.dateTime || b.start?.date || "";
@@ -169,31 +105,15 @@ export async function fetchGoogleCalendarEvents(
         isAllDay,
         status: event.status || "confirmed",
         htmlLink: event.htmlLink || undefined,
-        // Add calendar info
         calendarId: event.calendarId,
         calendarName: event.calendarName,
         calendarColor: event.calendarColor,
-      } satisfies GoogleCalendarMessage;
+      };
     });
 
     return parsedEvents;
   } catch (error) {
     console.error("Error fetching calendar events:", error);
-
-    // Handle specific error types
-    if (error instanceof Error) {
-      if (error.message.includes("insufficient authentication scopes")) {
-        throw new Error(
-          "Calendar access not granted. Please reconnect your Google account to enable calendar access."
-        );
-      }
-      if (error.message.includes("403")) {
-        throw new Error(
-          "Calendar access denied. Please check your Google account permissions."
-        );
-      }
-    }
-
     throw new Error("Failed to fetch calendar events");
   }
 }

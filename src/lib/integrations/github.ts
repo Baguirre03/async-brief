@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-interface GitHubNotification {
+export interface GitHubNotification {
   id: string;
   unread: boolean;
   reason: string;
@@ -17,7 +17,7 @@ interface GitHubNotification {
   };
 }
 
-interface GitHubMessage {
+export interface GitHubMessage {
   id: string;
   externalId: string;
   provider: "github";
@@ -31,7 +31,9 @@ interface GitHubMessage {
   tags: string[];
 }
 
-export async function fetchGitHubNotifications(userId: string) {
+export async function fetchGitHubNotifications(
+  userId: string
+): Promise<GitHubMessage[]> {
   const account = await prisma.account.findFirst({
     where: {
       userId,
@@ -40,19 +42,7 @@ export async function fetchGitHubNotifications(userId: string) {
   });
 
   if (!account || !account.access_token) {
-    return [] as Array<{
-      id: string;
-      externalId: string;
-      provider: string;
-      title: string | null;
-      content: string | null;
-      sender: string | null;
-      url: string | null;
-      recievedAt: Date;
-      priority: string;
-      status: string;
-      tags: string[];
-    }>;
+    return [];
   }
 
   const threeDaysAgo = new Date();
@@ -84,12 +74,12 @@ export async function fetchGitHubNotifications(userId: string) {
 
   const notifications = (await response.json()) as GitHubNotification[];
 
-  // Map to shared message shape
   const mapped = notifications.map((n) => {
     const repoName = n.repository.full_name;
     const webUrl = n.repository.html_url
       ? n.repository.html_url
       : `https://github.com/${repoName}`;
+
     return {
       id: `gh_${n.id}`,
       externalId: n.id,
@@ -99,10 +89,10 @@ export async function fetchGitHubNotifications(userId: string) {
       sender: repoName,
       url: webUrl,
       recievedAt: new Date(n.updated_at),
-      priority: "medium",
+      priority: "medium", // TODO: Add priority based on notification type
       status: n.unread ? "unread" : "read",
       tags: [n.subject.type.toLowerCase()],
-    } satisfies GitHubMessage;
+    } as GitHubMessage;
   });
 
   return mapped;

@@ -33,35 +33,10 @@ export async function GET() {
   } catch (error) {
     console.error("Calendar fetch error:", error);
 
-    // Handle specific error types
-    if (error instanceof Error) {
-      if (error.message.includes("No Google account connected")) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Google account not connected",
-            code: "GOOGLE_NOT_CONNECTED",
-          },
-          { status: 400 }
-        );
-      }
-
-      if (error.message.includes("Failed to fetch calendar events")) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Failed to fetch calendar events",
-            code: "CALENDAR_FETCH_FAILED",
-          },
-          { status: 500 }
-        );
-      }
-    }
-
     return NextResponse.json(
       {
         success: false,
-        error: "Internal server error",
+        error: "Error Fetching Calendar",
         code: "INTERNAL_ERROR",
       },
       { status: 500 }

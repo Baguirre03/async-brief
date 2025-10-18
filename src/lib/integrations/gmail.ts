@@ -1,7 +1,8 @@
 import { google } from "googleapis";
 import { prisma } from "@/lib/prisma";
+import { createGmailClient } from "../clients/gmail-client";
 
-interface GmailMessage {
+export interface GmailMessage {
   id: string;
   externalId: string;
   provider: string;
@@ -23,43 +24,7 @@ interface GmailMessage {
  * TODO: make smarter parsing of messages for information
  */
 export async function fetchGmailMessages(userId: string) {
-  const account = await prisma.account.findFirst({
-    where: {
-      userId,
-      provider: "google",
-    },
-  });
-
-  if (!account || !account.access_token) {
-    throw new Error("No Google account connected");
-  }
-
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET
-  );
-
-  oauth2Client.setCredentials({
-    access_token: account.access_token,
-    refresh_token: account.refresh_token,
-  });
-
-  oauth2Client.on("tokens", async (tokens) => {
-    if (tokens.refresh_token) {
-      await prisma.account.update({
-        where: { id: account.id },
-        data: {
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          expires_at: tokens.expiry_date
-            ? Math.floor(tokens.expiry_date / 1000)
-            : null,
-        },
-      });
-    }
-  });
-
-  const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+  const gmail = await createGmailClient(userId);
 
   const threeDaysAgo = new Date();
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
@@ -124,7 +89,7 @@ export async function fetchGmailMessages(userId: string) {
       priority: "medium",
       status: isUnread ? "unread" : "read",
       tags: [],
-    } satisfies GmailMessage;
+    } as GmailMessage;
   });
 
   return parsedMessages;
@@ -197,43 +162,7 @@ export async function markGmailMessageAsRead(
  * @param messageId - The ID of the message to delete
  */
 export async function deleteGmailMessage(userId: string, messageId: string) {
-  const account = await prisma.account.findFirst({
-    where: {
-      userId,
-      provider: "google",
-    },
-  });
-
-  if (!account || !account.access_token) {
-    throw new Error("No Google account connected");
-  }
-
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET
-  );
-
-  oauth2Client.setCredentials({
-    access_token: account.access_token,
-    refresh_token: account.refresh_token,
-  });
-
-  oauth2Client.on("tokens", async (tokens) => {
-    if (tokens.refresh_token) {
-      await prisma.account.update({
-        where: { id: account.id },
-        data: {
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          expires_at: tokens.expiry_date
-            ? Math.floor(tokens.expiry_date / 1000)
-            : null,
-        },
-      });
-    }
-  });
-
-  const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+  const gmail = await createGmailClient(userId);
 
   try {
     await gmail.users.messages.trash({
